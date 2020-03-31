@@ -1,0 +1,48 @@
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.game {
+  border-right: 2px solid #cfd8dc;
+}
+
+.game_form {
+  display: flex;
+  align-items: center;
+}
+
+.game_select, .game_input {
+  min-width: 172px;
+}
+
+.btn {
+  margin-right: 20px;
+}
+
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  width: 250px;
+}
+
+.field_block {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #cfd8dc;
+  cursor: pointer;
+}
