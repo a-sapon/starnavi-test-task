@@ -26,10 +26,6 @@ body {
   min-width: 172px;
 }
 
-.btn {
-  margin-right: 20px;
-}
-
 .field {
   display: flex;
   flex-wrap: wrap;

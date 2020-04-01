@@ -1,38 +1,51 @@
 const fieldContainer = document.querySelector('.field');
 const gameForm = document.querySelector('.game_form');
+const playBtn = document.querySelector('.js-play-btn');
 
 gameForm.addEventListener('submit', handleSubmit);
 
 async function handleSubmit(e) {
   e.preventDefault();
+  fieldContainer.innerHTML = '';
+  playBtn.textContent = 'Play';
   const mode = e.currentTarget.elements.mode.value;
-  // const name = e.currentTarget.elements.name.value;
-  const gameField = new GameField(mode);
+  const name = e.currentTarget.elements.name.value;
+  const gameField = new GameField(mode, name);
+  gameField.user.name = name;
   await gameField.getGameSettings();
   gameField.createGameField(gameField.fieldBlocksNum);
 
   const blocks = fieldContainer.children;
-  const makeBlueId = setInterval(
-    () => gameField.makeRandomBlockBlue(blocks),
-    gameField.delay
-  );
-  const makeRedId = setInterval(
-    () => gameField.makeBlockRed(blocks, makeBlueId, makeRedId),
-    gameField.delay
-  );
-
-  const boundMakeBlockGreen = gameField.makeBlockGreen.bind(gameField);
-  fieldContainer.addEventListener('click', boundMakeBlockGreen);
+  if (gameField.game === 'on') {
+    const makeBlueId = setInterval(
+      () => gameField.makeRandomBlockBlue(blocks),
+      gameField.delay
+    );
+    const makeRedId = setInterval(
+      () => gameField.makeBlockRed(blocks, makeBlueId, makeRedId),
+      gameField.delay
+    );
+    const boundMakeBlockGreen = gameField.makeBlockGreen.bind(gameField);
+    fieldContainer.addEventListener('click', boundMakeBlockGreen);
+  }
 }
 
 class GameField {
-  constructor(mode) {
+  constructor(mode, name) {
     this.mode = mode;
     this.fieldBlocksNum = 0;
     this.delay = 0;
     this.game = 'on';
-    this.userPoints = 0;
-    this.pcPoints = 0;
+    this.user = {
+      name,
+      points: 0,
+      isWinner: false
+    };
+    this.pc = {
+      name: 'Computer',
+      points: 0,
+      isWinner: false
+    }
   }
 
   async getGameSettings() {
@@ -44,7 +57,7 @@ class GameField {
         data: {
           easyMode: {
             field: 5,
-            delay: 1000
+            delay: 200
           },
           normalMode: {
             field: 10,
@@ -99,7 +112,7 @@ class GameField {
     if (!e.target.style.backgroundColor) return;
     if (e.target.style.backgroundColor === 'rgb(0, 102, 255)') {
       e.target.style.backgroundColor = 'rgb(0, 204, 0)';
-      this.userPoints += 1;
+      this.user.points += 1;
     }
   }
 
@@ -111,23 +124,41 @@ class GameField {
       setTimeout(() => {
         if (el.style.backgroundColor === 'rgb(0, 102, 255)') {
           el.style.backgroundColor = 'rgb(255, 26, 26)';
-          this.pcPoints += 1;
+          this.pc.points += 1;
         }
       }, this.delay);
     });
 
     setTimeout(() => {
       if (arr.every(el => el.style.backgroundColor !== '')) {
-        this.endGame(makeBlueId, makeRedId);
-        this.game = 'off';
+        this.checkWinner(makeBlueId, makeRedId);
       }
-    }, this.delay);
+    }, this.delay - 500);
+  }
+
+  checkWinner(makeBlueId, makeRedId) {
+    const fiftyPercent = this.fieldBlocksNum * 0.5;
+    if (this.user.points > fiftyPercent) {
+      this.user.isWinner = true;
+      this.pc.isWinner = false;
+      this.endGame(makeBlueId, makeRedId);
+    } else if (this.pc.points > fiftyPercent) {
+      this.pc.isWinner = true;
+      this.user.isWinner = false;
+      this.endGame(makeBlueId, makeRedId);
+    }
   }
 
   endGame(interval1, interval2) {
+    this.game = 'off';
     clearInterval(interval1);
     clearInterval(interval2);
     fieldContainer.removeEventListener('click', this.makeBlockGreen);
+    playBtn.textContent = 'Play again';
+    console.log(this.user.name, ' is a winner, thats', this.user.isWinner);
+    console.log('pc.isWinner', this.pc.isWinner);
+
+    
   }
 
 }
