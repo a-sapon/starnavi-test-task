@@ -17,10 +17,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.game {
-  border-right: 2px solid #cfd8dc;
-}
-
 .game_form {
   display: flex;
   align-items: center;
@@ -37,7 +33,6 @@ body {
 .field {
   display: flex;
   flex-wrap: wrap;
-  width: 250px;
 }
 
 .field_block {
