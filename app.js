@@ -31,7 +31,7 @@ async function handleSubmit(e) {
 }
 
 class GameField {
-  constructor(mode, name) {
+  constructor(mode = 'easyMode', name = '') {
     this.mode = mode;
     this.fieldBlocksNum = 0;
     this.delay = 0;
@@ -45,30 +45,14 @@ class GameField {
       name: 'Computer',
       points: 0,
       isWinner: false
-    }
+    };
   }
 
   async getGameSettings() {
     try {
-      // const response = await axios.get(
-      //   'https://starnavi-frontend-test-task.herokuapp.com/game-settings'
-      // );
-      const response = {
-        data: {
-          easyMode: {
-            field: 5,
-            delay: 200
-          },
-          normalMode: {
-            field: 10,
-            delay: 1000
-          },
-          hardMode: {
-            field: 15,
-            delay: 900
-          }
-        }
-      };
+      const response = await axios.get(
+        'https://starnavi-frontend-test-task.herokuapp.com/game-settings'
+      );
       for (let key in response.data) {
         if (key === this.mode) {
           const modeNum = response.data[key].field;
@@ -149,16 +133,48 @@ class GameField {
     }
   }
 
-  endGame(interval1, interval2) {
+  async endGame(interval1, interval2) {
     this.game = 'off';
     clearInterval(interval1);
     clearInterval(interval2);
     fieldContainer.removeEventListener('click', this.makeBlockGreen);
     playBtn.textContent = 'Play again';
-    console.log(this.user.name, ' is a winner, thats', this.user.isWinner);
-    console.log('pc.isWinner', this.pc.isWinner);
 
-    
+    const winner = {
+      winner: this.user.name,
+      date: this.getCurrentDate()
+    }
+
+    await axios.post('https://starnavi-frontend-test-task.herokuapp.com/winners', winner);
   }
 
+  getCurrentDate() {
+    const currentDate = new Date();
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    const monthNum = currentDate.getMonth();
+    const month = months[monthNum];
+    let date = currentDate.getDate();
+    const year = currentDate.getFullYear();
+    let hours = currentDate.getHours();
+    let minutes = currentDate.getMinutes();
+
+    date = date < 10 ? '0' + date : date;
+    hours = hours < 10 ? '0' + hours : hours;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+
+    return `${hours}:${minutes}; ${date} ${month} ${year}`;
+  }
 }
