@@ -16,7 +16,7 @@
   </head>
   <body>
     <div class="row s12">
-      <section class="col s6 game">
+      <section class="col s6 game_section">
         <div class="row">
           <form class="game_form" autocomplete="off">
             <select class="browser-default col s4 game_select" name="mode">
@@ -43,10 +43,14 @@
             </button>
           </form>
         </div>
+        <h4 class="container center winner-msg"></h4>
         <div class="container field"></div>
       </section>
 
-      <section class="col s6"></section>
+      <section class="col s4 right">
+        <h4 class="center-align">Leader Board</h4>
+        <ul class="collection winners_list"></ul>
+      </section>
     </div>
 
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>

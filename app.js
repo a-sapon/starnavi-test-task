@@ -7,11 +7,17 @@ gameForm.addEventListener('submit', handleSubmit);
 async function handleSubmit(e) {
   e.preventDefault();
   fieldContainer.innerHTML = '';
+  document.querySelector('.winner-msg').textContent = '';
   playBtn.textContent = 'Play';
   const mode = e.currentTarget.elements.mode.value;
   const name = e.currentTarget.elements.name.value;
   const gameField = new GameField(mode, name);
-  gameField.user.name = name;
+  if (mode === '') {
+    return gameField.showAlert('Please choose the game mode!');
+  } else if (name === '') {
+    return gameField.showAlert('Please enter your user name!');
+  }
+
   await gameField.getGameSettings();
   gameField.createGameField(gameField.fieldBlocksNum);
 
@@ -31,7 +37,7 @@ async function handleSubmit(e) {
 }
 
 class GameField {
-  constructor(mode = 'easyMode', name = '') {
+  constructor(mode, name) {
     this.mode = mode;
     this.fieldBlocksNum = 0;
     this.delay = 0;
@@ -141,11 +147,17 @@ class GameField {
     playBtn.textContent = 'Play again';
 
     const winner = {
-      winner: this.user.name,
+      winner: this.user.isWinner ? this.user.name : this.pc.name,
       date: this.getCurrentDate()
-    }
+    };
 
-    await axios.post('https://starnavi-frontend-test-task.herokuapp.com/winners', winner);
+    document.querySelector(
+      '.winner-msg'
+    ).textContent = `${winner.winner} wins!`;
+    await axios.post(
+      'https://starnavi-frontend-test-task.herokuapp.com/winners',
+      winner
+    );
   }
 
   getCurrentDate() {
@@ -177,4 +189,38 @@ class GameField {
 
     return `${hours}:${minutes}; ${date} ${month} ${year}`;
   }
+
+  showAlert(message) {
+    const div = document.createElement('div');
+    div.classList.add('error');
+    div.textContent = message;
+    document.querySelector('.game_section').insertBefore(div, fieldContainer);
+    setTimeout(() => {
+      div.remove();
+    }, 3000);
+  }
+}
+
+// Leader Board
+const winnersList = document.querySelector('.winners_list');
+document.addEventListener('DOMContentLoaded', getWinners);
+
+async function getWinners() {
+  const response = await axios.get(
+    'https://starnavi-frontend-test-task.herokuapp.com/winners'
+  );
+  const markup = response.data.reduce((acc, { winner, date }) => {
+    return (acc += `
+    <li class="collection-item">
+      <div class="winner-item">
+        <span class="truncate">${winner}</span>
+        <span>${date}</span>
+        <a href="#!" class="secondary-content">
+          <i class="material-icons">grade</i>
+        </a>
+      </div>
+    </li>
+    `);
+  }, '');
+  winnersList.insertAdjacentHTML('beforeend', markup);
 }
