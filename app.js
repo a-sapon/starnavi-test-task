@@ -129,15 +129,9 @@ const gameField = {
     const fiftyPercent = this.fieldBlocksNum * 0.5;
     if (this.user.points > fiftyPercent) {
       this.user.isWinner = true;
-      console.log('fiftyPercent', fiftyPercent);
-      console.log('this.user.points', this.user.points);
-      console.log('this.pc.points', this.pc.points);
       this.endGame();
     } else if (this.pc.points > fiftyPercent) {
       this.pc.isWinner = true;
-      console.log('fiftyPercent', fiftyPercent);
-      console.log('this.user.points', this.user.points);
-      console.log('this.pc.points', this.pc.points);
       this.endGame();
     }
   },
