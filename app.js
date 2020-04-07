@@ -2,6 +2,8 @@ const fieldContainer = document.querySelector('.field');
 const gameForm = document.querySelector('.game_form');
 const playBtn = document.querySelector('.js-play-btn');
 const blocks = fieldContainer.children;
+let makeBlueId;
+let makeRedId;
 
 gameForm.addEventListener('submit', handleSubmit);
 
@@ -19,11 +21,16 @@ async function handleSubmit(e) {
   const boundMakeBlockGreen = gameField.makeBlockGreen.bind(gameField);
   fieldContainer.addEventListener('click', boundMakeBlockGreen);
 
-  const makeBlueId = setInterval(
+  if (makeBlueId !== undefined && makeRedId !== undefined) {
+    clearInterval(makeBlueId);
+    clearInterval(makeRedId);
+  }
+
+  makeBlueId = setInterval(
     () => gameField.makeRandomBlockBlue(makeBlueId),
     gameField.delay
   );
-  const makeRedId = setInterval(
+  makeRedId = setInterval(
     () => gameField.makeBlockRed(makeRedId),
     gameField.delay
   );
