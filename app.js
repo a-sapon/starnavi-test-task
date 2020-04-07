@@ -1,60 +1,51 @@
 const fieldContainer = document.querySelector('.field');
 const gameForm = document.querySelector('.game_form');
 const playBtn = document.querySelector('.js-play-btn');
+const blocks = fieldContainer.children;
 
 gameForm.addEventListener('submit', handleSubmit);
 
 async function handleSubmit(e) {
   e.preventDefault();
-  fieldContainer.innerHTML = '';
-  document.querySelector('.winner-msg').textContent = '';
-  playBtn.textContent = 'Play';
   const mode = e.currentTarget.elements.mode.value;
   const name = e.currentTarget.elements.name.value;
-  const gameField = new GameField(mode, name);
   if (mode === '') {
     return gameField.showAlert('Please choose the game mode!');
   } else if (name === '') {
     return gameField.showAlert('Please enter your user name!');
   }
 
-  await gameField.getGameSettings();
-  gameField.createGameField(gameField.fieldBlocksNum);
+  await gameField.setDefaultValues(mode, name);
+  const boundMakeBlockGreen = gameField.makeBlockGreen.bind(gameField);
+  fieldContainer.addEventListener('click', boundMakeBlockGreen);
 
-  const blocks = fieldContainer.children;
-  if (gameField.game === 'on') {
-    const makeBlueId = setInterval(
-      () => gameField.makeRandomBlockBlue(blocks),
-      gameField.delay
-    );
-    const makeRedId = setInterval(
-      () => gameField.makeBlockRed(blocks, makeBlueId, makeRedId),
-      gameField.delay
-    );
-    const boundMakeBlockGreen = gameField.makeBlockGreen.bind(gameField);
-    fieldContainer.addEventListener('click', boundMakeBlockGreen);
-  }
+  const makeBlueId = setInterval(
+    () => gameField.makeRandomBlockBlue(makeBlueId),
+    gameField.delay
+  );
+  const makeRedId = setInterval(
+    () => gameField.makeBlockRed(makeRedId),
+    gameField.delay
+  );
 }
 
-class GameField {
-  constructor(mode, name) {
-    this.mode = mode;
-    this.fieldBlocksNum = 0;
-    this.delay = 0;
-    this.game = 'on';
-    this.user = {
-      name,
-      points: 0,
-      isWinner: false
-    };
-    this.pc = {
-      name: 'Computer',
-      points: 0,
-      isWinner: false
-    };
-  }
+const gameField = {
+  mode: null,
+  fieldBlocksNum: 0,
+  delay: 0,
+  gameOver: false,
+  user: {
+    name: '',
+    points: 0,
+    isWinner: false,
+  },
+  pc: {
+    name: 'Computer',
+    points: 0,
+    isWinner: false,
+  },
 
-  async getGameSettings() {
+  getGameSettings: async function () {
     try {
       const response = await axios.get(
         'https://starnavi-frontend-test-task.herokuapp.com/game-settings'
@@ -77,78 +68,87 @@ class GameField {
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 
-  createGameField(amount) {
+  createGameField: function (amount) {
     for (let i = 0; i < amount; i += 1) {
       const block = document.createElement('div');
       block.classList.add('field_block');
       fieldContainer.append(block);
     }
-  }
+  },
 
-  makeRandomBlockBlue(blocks) {
+  makeRandomBlockBlue: function (intervalId) {
     const randomNum = Math.round(Math.random() * (blocks.length - 1));
     if (!blocks[randomNum].style.backgroundColor) {
       blocks[randomNum].style.backgroundColor = 'rgb(0, 102, 255)';
     } else {
-      if (this.game === 'on') {
-        this.makeRandomBlockBlue(blocks);
+      this.isGameOver(blocks, intervalId);
+      if (this.gameOver === false) {
+        this.makeRandomBlockBlue(intervalId);
+      } else {
+        this.checkWinner();
       }
     }
-  }
+  },
 
-  makeBlockGreen(e) {
-    if (!e.target.style.backgroundColor) return;
-    if (e.target.style.backgroundColor === 'rgb(0, 102, 255)') {
-      e.target.style.backgroundColor = 'rgb(0, 204, 0)';
-      this.user.points += 1;
-    }
-  }
-
-  makeBlockRed(blocks, makeBlueId, makeRedId) {
-    const arr = Array.from(blocks);
-    arr.forEach(el => {
+  makeBlockRed: function (intervalId) {
+    const blocksArr = Array.from(blocks);
+    blocksArr.forEach((el) => {
       if (!el.style.backgroundColor) return;
       if (el.style.backgroundColor === 'rgb(0, 204, 0)') return;
       setTimeout(() => {
         if (el.style.backgroundColor === 'rgb(0, 102, 255)') {
           el.style.backgroundColor = 'rgb(255, 26, 26)';
           this.pc.points += 1;
+          this.isGameOver(blocks, intervalId);
         }
       }, this.delay);
     });
+  },
 
-    setTimeout(() => {
-      if (arr.every(el => el.style.backgroundColor !== '')) {
-        this.checkWinner(makeBlueId, makeRedId);
-      }
-    }, this.delay - 500);
-  }
+  makeBlockGreen: function (e) {
+    if (!e.target.style.backgroundColor) return;
+    if (e.target.style.backgroundColor === 'rgb(0, 102, 255)') {
+      e.target.style.backgroundColor = 'rgb(0, 204, 0)';
+      this.user.points += 1;
+    }
+  },
 
-  checkWinner(makeBlueId, makeRedId) {
+  isGameOver: function (nodes, intervalId) {
+    const arr = Array.from(nodes);
+    arr.every((el) => el.style.backgroundColor !== '')
+      ? (this.gameOver = true)
+      : (this.gameOver = false);
+    if (this.gameOver === true) {
+      clearInterval(intervalId);
+    }
+  },
+
+  checkWinner: function () {
     const fiftyPercent = this.fieldBlocksNum * 0.5;
     if (this.user.points > fiftyPercent) {
       this.user.isWinner = true;
-      this.pc.isWinner = false;
-      this.endGame(makeBlueId, makeRedId);
+      console.log('fiftyPercent', fiftyPercent);
+      console.log('this.user.points', this.user.points);
+      console.log('this.pc.points', this.pc.points);
+      this.endGame();
     } else if (this.pc.points > fiftyPercent) {
       this.pc.isWinner = true;
-      this.user.isWinner = false;
-      this.endGame(makeBlueId, makeRedId);
+      console.log('fiftyPercent', fiftyPercent);
+      console.log('this.user.points', this.user.points);
+      console.log('this.pc.points', this.pc.points);
+      this.endGame();
     }
-  }
+  },
 
-  async endGame(interval1, interval2) {
-    this.game = 'off';
-    clearInterval(interval1);
-    clearInterval(interval2);
+  endGame: async function () {
     fieldContainer.removeEventListener('click', this.makeBlockGreen);
     playBtn.textContent = 'Play again';
 
     const winner = {
       winner: this.user.isWinner ? this.user.name : this.pc.name,
-      date: this.getCurrentDate()
+      date: this.getCurrentDate(),
     };
 
     document.querySelector(
@@ -158,9 +158,9 @@ class GameField {
       'https://starnavi-frontend-test-task.herokuapp.com/winners',
       winner
     );
-  }
+  },
 
-  getCurrentDate() {
+  getCurrentDate: function () {
     const currentDate = new Date();
     const months = [
       'January',
@@ -174,7 +174,7 @@ class GameField {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     const monthNum = currentDate.getMonth();
     const month = months[monthNum];
@@ -188,9 +188,9 @@ class GameField {
     minutes = minutes < 10 ? '0' + minutes : minutes;
 
     return `${hours}:${minutes}; ${date} ${month} ${year}`;
-  }
+  },
 
-  showAlert(message) {
+  showAlert: function (message) {
     const div = document.createElement('div');
     div.classList.add('error');
     div.textContent = message;
@@ -198,8 +198,23 @@ class GameField {
     setTimeout(() => {
       div.remove();
     }, 3000);
-  }
-}
+  },
+
+  setDefaultValues: async function (mode, name) {
+    fieldContainer.innerHTML = '';
+    document.querySelector('.winner-msg').textContent = '';
+    playBtn.textContent = 'Play';
+    this.mode = mode;
+    this.user.name = name;
+    this.gameOver = false;
+    this.user.points = 0;
+    this.pc.points = 0;
+    this.user.isWinner = false;
+    this.pc.isWinner = false;
+    await this.getGameSettings();
+    this.createGameField(this.fieldBlocksNum);
+  },
+};
 
 // Leader Board
 const winnersList = document.querySelector('.winners_list');
